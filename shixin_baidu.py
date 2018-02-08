@@ -8,7 +8,7 @@ import pymongo
 from item_dump import Item_dump
 import datetime
 from read_company import read_company
-
+import sys
 
 
 proxyHost = "http-dyn.abuyun.com"
@@ -84,15 +84,17 @@ _:1517966791842
 '''
 
 class Sx_baidu_spider():
-    def __init__(self, company_list):
+    def __init__(self, path, type, text_list=None):
+        self.company_list = read_company(path)
         u = Rand_ua()
         ua = u.rand_chose()
-        self.company_list = company_list
         self.headers = {
             "User-Agent":"".format(ua),
         }
         self.client = pymongo.MongoClient(host='127.0.0.1', port=27017)
         self.conn = self.client["qg_ss"]['company']
+        self.type = type
+        self.text_list = text_list
 
     def get_json(self):
         for c in self.company_list:
@@ -103,6 +105,7 @@ class Sx_baidu_spider():
                 if not ret:
                     item = {}
                     item["company"] = company
+                    item["type"] = self.type
                     nd = int(time.time()) * 1000
                     nd1 = nd + 2500000
                     url = "https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?resource_id=6899&query=%E5%A4%B1%E4%BF%A1%E8%A2%AB%E6%89%A7%E8%A1%8C%E4%BA%BA%E5%90%8D%E5%8D%95&cardNum=&iname={}&areaName=&ie=utf-8&oe=utf-8&format=json&t={}&cb=jQuery1102025075011778413225_1517966791832&_={}".format(company, nd1, nd)
@@ -117,7 +120,34 @@ class Sx_baidu_spider():
                     h = Handel_json(json, company)
                     ss_list = h.handel_json()
                     item["失信信息"] = ss_list
+                    print(item)
                     self.save_mongodb(item)
+                    time.sleep(3)
+
+    # 测试模式,不保存数据库，不去重
+    def get_text(self):
+        if self.text_list:
+            for c in self.text_list:
+                company = c.strip()
+                if company:
+                    item = {}
+                    item["company"] = company
+                    item["type"] = self.type
+                    nd = int(time.time()) * 1000
+                    nd1 = nd + 2500000
+                    url = "https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?resource_id=6899&query=%E5%A4%B1%E4%BF%A1%E8%A2%AB%E6%89%A7%E8%A1%8C%E4%BA%BA%E5%90%8D%E5%8D%95&cardNum=&iname={}&areaName=&ie=utf-8&oe=utf-8&format=json&t={}&cb=jQuery1102025075011778413225_1517966791832&_={}".format(company, nd1, nd)
+                    try:
+                        ret = requests.get(url, headers=self.headers)
+                    except Exception as e:
+                        with open('log/ss_log.log','a') as f:
+                            now = str(datetime.datetime.now())
+                            f.write(now + ',' + str(e) + ',' + company + ',' + '失信信息' + '\n')
+                        continue
+                    json = ret.content.decode()
+                    h = Handel_json(json, company)
+                    ss_list = h.handel_json()
+                    item["失信信息"] = ss_list
+                    print(item)
                     time.sleep(3)
 
     def save_mongodb(self, item):
@@ -127,51 +157,39 @@ class Sx_baidu_spider():
 
 if __name__ == '__main__':
 
-    company_list = read_company('company/监理类公司.csv')
-
-    s = Sx_baidu_spider(company_list)
+    path = sys.argv[1]
+    type = sys.argv[2]
+    # company_list = ["广西五鸿建设集团有限公司","昆明翔威泵业制造有限责任公司","无锡市江南容器成套有限公司","黑龙江宇林建筑工程有限责任公司"]
+    s = Sx_baidu_spider(path, type)
     s.get_json()
-                # 数据格式
-                # {"company":"","失信信息":[]}
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-with open('sz_company.csv','r') as f:
-    c_list = f.readlines()
-
-for c in c_list:
-    company = c.strip()
-    if company:
-        print(c)
-        u = Rand_ua()
-        ua = u.rand_chose()
-        headers = {
-            "User-Agent":''.format(ua)
-        }
-        nd = int(time.time())*1000
-        nd1 = nd+2500000
-        url = "https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?resource_id=6899&query=%E5%A4%B1%E4%BF%A1%E8%A2%AB%E6%89%A7%E8%A1%8C%E4%BA%BA%E5%90%8D%E5%8D%95&cardNum=&iname={}&areaName=&ie=utf-8&oe=utf-8&format=json&t={}&cb=jQuery1102025075011778413225_1517966791832&_={}".format(company,nd1,nd)
-
-        ret = requests.get(url,headers=headers)
-        json = ret.content.decode()
-        j = company+','+json+'\n'
-        with open('json_text.csv','a') as f:
-            f.write(j)
-        print(ret.content.decode())
-        time.sleep(3)
+# with open('sz_company.csv','r') as f:
+#     c_list = f.readlines()
+#
+# for c in c_list:
+#     company = c.strip()
+#     if company:
+#         print(c)
+#         u = Rand_ua()
+#         ua = u.rand_chose()
+#         headers = {
+#             "User-Agent":''.format(ua)
+#         }
+#         nd = int(time.time())*1000
+#         nd1 = nd+2500000
+#         url = "https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?resource_id=6899&query=%E5%A4%B1%E4%BF%A1%E8%A2%AB%E6%89%A7%E8%A1%8C%E4%BA%BA%E5%90%8D%E5%8D%95&cardNum=&iname={}&areaName=&ie=utf-8&oe=utf-8&format=json&t={}&cb=jQuery1102025075011778413225_1517966791832&_={}".format(company,nd1,nd)
+#
+#         ret = requests.get(url,headers=headers)
+#         json = ret.content.decode()
+#         j = company+','+json+'\n'
+#         with open('json_text.csv','a') as f:
+#             f.write(j)
+#         print(ret.content.decode())
+#         time.sleep(3)
 
 '''
 /**/jQuery1102025075011778413225_1517966791832({"status":"0","t":"1517970076623","set_cache_time":"","data":[{"result":[{"StdStg":6899, "StdStl":8, "_update_time":"1517969399", "cambrian_appid":"0", "changefreq":"always", "age":"0", "areaName":"江苏", "businessEntity":"王兵", "cardNum":"55803953-7", "caseCode":"(2017)苏0116执3385号", "courtName":"南京市六合区人民法院", "disruptTypeName":"有履行能力而拒不履行生效法律文书确定义务", "duty":"一、王兵、刘韫馨于本判决生效之日起十日内给付南京市六合区顺昌农村小额贷款有限公司借款本金300万元及2017年2月16日前利息、复利合计287273.37元，同时给付自2017年2月17日起至实际给付之日止的利息及罚息（按借款本金300万元，月利率1.1667%、逾期利率上浮50%计算）；二、王兵、刘韫馨于本判决生效之日起十日内给付南京市六合区顺昌农村小额贷款有限公司律师代理费61100元；三、南京市六合区顺昌农村小额贷款有限公司对王兵、刘韫馨位于南京市秦淮区龙蟠中路459号白露新寓7幢1单元1101室房屋拍卖、变卖的价款，在上述第一、二项判决范围内享有优先受偿权；四、江苏梵克雅宝纺织科技发展有限公司对上述第一、二项判决义务承担连带保证责任；五、江苏梵克雅宝纺织科技发展有限公司承担保证责任后，有权向王兵、刘韫馨追偿。如未按判决指定的期间履行给付金钱义务，应当依照《中华人民共和国民事诉讼法》第二百五十三条之规定，加倍支付迟延履行期间的债务利息。案件受理费33587元，保全费5000元，公告费560元，合计39147元，由三被告负担(原告已预交)。如不服本判决，可在判决书送达之日起十五日内，按对方当事人的人数向本院递交上诉状及副本，上诉于江苏省南京市中级人民法院。同时根据《诉讼费用交纳办法》的有关规定，在上诉期满后七日内向该院（户名：江苏省南京市中级人民法院；开户行：中国工商银行南京市汉口路支行；账号：4301011329100245018）预交上诉案件受理费33587元。", "focusNumber":"0", "gistId":"(2017)苏0116民初1976号", "gistUnit":"南京市六合区人民法院", "iname":"江苏梵克雅宝纺织科技发展有限公司", "partyTypeName":"1", "performance":"全部未履行", "performedPart":"暂无", "publishDate":"2017年12月27日", "publishDateStamp":"1514304000", "regDate":"20171130", "sexy":"", "sitelink":"http:\/\/shixin.court.gov.cn\/", "type":"失信被执行人名单", "unperformPart":"暂无", "lastmod":"2018-02-06T23:13:15", "loc":"http:\/\/shixin.court.gov.cn\/detail?id=702132823", "priority":"1.0", "SiteId":2004188, "_version":18228, "_select_time":1517968664}, {"StdStg":6899, "StdStl":8, "_update_time":"1517969219", "cambrian_appid":"0", "changefreq":"always", "age":"0", "areaName":"江苏", "businessEntity":"王兵", "cardNum":"55803953-7", "caseCode":"(2017)苏0105执1858号", "courtName":"南京市建邺区人民法院", "disruptTypeName":"有履行能力而拒不履行生效法律文书确定义务", "duty":"江苏梵克雅宝纺织科技发展有限公司于本判决书生效之日起十五日内支付王晓君2016年9月、10月、11月8天工资共计6800元，解除劳动关系经济补偿7500元，合计14300元。江苏梵克雅宝纺织科技发展有限公司如果未按本判决指定的期间履行给付金钱义务，应当依照《中华人民共和国民事诉讼法》第二百五十三条之规定，加倍支付迟延履行期间的债务利息。本案案件受理费10元，予以免交；公告费300元，由江苏梵克雅宝纺织科技发展有限公司承担。公告费由江苏梵克雅宝纺织科技发展有限公司于本判决书生效之日起十五日内直接支付给王晓君，以抵冲其预付的公告费用。如不服本判决，可在判决书送达之日起十五日内，向本院递交上诉状及副本一份，上诉于江苏省南京市中级人民法院。", "focusNumber":"0", "gistId":"(2017)苏0105民初507号", "gistUnit":"南京市建邺区人民法院", "iname":"江苏梵克雅宝纺织科技发展有限公司", "partyTypeName":"1", "performance":"全部未履行", "performedPart":"暂无", "publishDate":"2017年11月26日", "publishDateStamp":"1511625600", "regDate":"20170829", "sexy":"", "sitelink":"http:\/\/shixin.court.gov.cn\/", "type":"失信被执行人名单", "unperformPart":"暂无", "lastmod":"2018-02-07T02:02:17", "loc":"http:\/\/shixin.court.gov.cn\/detail?id=701738802", "priority":"1.0", "SiteId":2004188, "_version":18228, "_select_time":1517968664}, {"StdStg":6899, "StdStl":8, "_update_time":"1517969401", "cambrian_appid":"0", "changefreq":"always", "age":"0", "areaName":"江苏", "businessEntity":"王兵", "cardNum":"55803953-7", "caseCode":"(2017)苏0105执1996号", "courtName":"南京市建邺区人民法院", "disruptTypeName":"有履行能力而拒不履行生效法律文书确定义务", "duty":"一、双方确认被告江苏梵克雅宝纺织科技发展有限公司截至2017年7月7日尚欠原告江苏金华新商业保理有限公司借款本金985万元及利息157.60万元（自2016年11月8日起，按月利率2%计算至2017年7月7日止）。二、被告江苏梵克雅宝纺织科技发展有限公司自2017年7月至2017年11月，每月30日前给付原告江苏金华新商业保理有限公司本金150万元，2017年12月31日前给付原告江苏金华新商业保理有限公司剩余借款本金及全部利息（截至2017年7月7日的利息为157.60万元，之后的利息以未付本金为基数，自2017年7月8日起按月利率2%计算至实际支付之日止）。三、被告王兵、刘韫馨对被告江苏梵克雅宝纺织科技发展有限公司上述付款义务承担连带还款责任。四、原告江苏金华新商业保理有限公司放弃其他诉讼请求。五、若被告江苏梵克雅宝纺织科技发展有限公司、王兵、刘韫馨有任何一期未按约支付，原告江苏金华新商业保理有限公司有权就剩余全部借款本金及利息向人民法院申请强制执行。六、本案案件受理费100880元，减半收取50440元，保全费5000元，合计55440元，由被告江苏梵克雅宝纺织科技发展有限公司、王兵、刘韫馨共同负担，由三被告于2017年12月31日前给付原告江苏金华新商业保理有限公司。七、双方就本案再无其他争议。", "focusNumber":"0", "gistId":"(2016)苏0105民初9401号", "gistUnit":"南京市建邺区人民法院", "iname":"江苏梵克雅宝纺织科技发展有限公司", "partyTypeName":"1", "performance":"全部未履行", "performedPart":"暂无", "publishDate":"2017年11月21日", "publishDateStamp":"1511193600", "regDate":"20170919", "sexy":"", "sitelink":"http:\/\/shixin.court.gov.cn\/", "type":"失信被执行人名单", "unperformPart":"暂无", "lastmod":"2018-02-07T00:12:35", "loc":"http:\/\/shixin.court.gov.cn\/detail?id=701675366", "priority":"1.0", "SiteId":2004188, "_version":18228, "_select_time":1517968664}, {"StdStg":6899, "StdStl":8, "_update_time":"1517968953", "cambrian_appid":"0", "changefreq":"always", "age":"0", "areaName":"江苏", "businessEntity":"王兵", "cardNum":"55803953-7", "caseCode":"(2017)苏0105执1887号", "courtName":"南京市建邺区人民法院", "disruptTypeName":"有履行能力而拒不履行生效法律文书确定义务", "duty":"江苏梵克雅宝纺织科技发展有限公司于本判决书生效之日起十五日内支付陈华玉2016年9月、10月、11月1日至16日的工资共计10000元，解除劳动关系经济补偿2000元，合计12000元。江苏梵克雅宝纺织科技发展有限公司如果未按本判决指定的期间履行给付金钱义务，应当依照《中华人民共和国民事诉讼法》第二百五十三条之规定，加倍支付迟延履行期间的债务利息。本案案件受理费10元，予以免交；公告费300元，由江苏梵克雅宝纺织科技发展有限公司承担。公告费由江苏梵克雅宝纺织科技发展有限公司于本判决书生效之日起十五日内直接支付给陈华玉，以抵冲其预付的公告费用。如不服本判决，可在判决书送达之日起十五日内，向本院递交上诉状及副本一份，上诉于江苏省南京市中级人民法院。", "focusNumber":"0", "gistId":"(2017)苏0105民初511号", "gistUnit":"南京市建邺区人民法院", "iname":"江苏梵克雅宝纺织科技发展有限公司", "partyTypeName":"1", "performance":"全部未履行", "performedPart":"暂无", "publishDate":"2017年10月13日", "publishDateStamp":"1507824000", "regDate":"20170901", "sexy":"", "sitelink":"http:\/\/shixin.court.gov.cn\/", "type":"失信被执行人名单", "unperformPart":"暂无", "lastmod":"2018-02-07T01:44:42", "loc":"http:\/\/shixin.court.gov.cn\/detail?id=701291559", "priority":"1.0", "SiteId":2004188, "_version":18228, "_select_time":1517968664}, {"StdStg":6899, "StdStl":8, "_update_time":"1517968724", "cambrian_appid":"0", "changefreq":"always", "age":"0", "areaName":"江苏", "businessEntity":"王兵", "cardNum":"55803953-7", "caseCode":"(2017)苏0106执3049号", "courtName":"南京市鼓楼区人民法院", "disruptTypeName":"有履行能力而拒不履行生效法律文书确定义务", "duty":"一、被告王兵、刘韫馨于本判决生效之日起十日内共同偿还原告李晓栋借款本金1792629元，并支付逾期利息（自2016年10月22日起至实际给付之日止，按月息2%计算）；二、被告王兵、刘韫馨于本判决生效之日起十日内支付原告李晓栋律师费3万元；三、被告章山林、陈华玉、江苏梵克雅宝纺织科技发展有限公司对上述（一）、（二）项债务承担连带清偿责任，并在清偿后有权向被告王兵、刘韫馨追偿，或者要求承担连带责任的其他保证人清偿其应当承担的份额。如果五被告未按本判决指定的期间履行给付义务，应当依照《中华人民共和国民事诉讼法》第二百五十三条的规定,加倍向原告支付迟延履行期间的债务利息。案件受理费21793元，财产保全费5000元，公告费600元，合计27393元，由被告王兵、刘韫馨、章山林、陈华玉、江苏梵克雅宝纺织科技发展有限公司共同负担。如不服本判决，可在判决书送达之日起十五日内，向本院递交上诉状，并按对方当事人的人数提出副本，上诉于江苏省南京市中级人民法院。", "focusNumber":"0", "gistId":"(2016)苏0106民初10662号", "gistUnit":"南京市鼓楼区人民法院", "iname":"江苏梵克雅宝纺织科技发展有限公司", "partyTypeName":"1", "performance":"全部未履行", "performedPart":"暂无", "publishDate":"2017年10月11日", "publishDateStamp":"1507651200", "regDate":"20170712", "sexy":"", "sitelink":"http:\/\/shixin.court.gov.cn\/", "type":"失信被执行人名单", "unperformPart":"暂无", "lastmod":"2018-02-07T01:43:41", "loc":"http:\/\/shixin.court.gov.cn\/detail?id=701260195", "priority":"1.0", "SiteId":2004188, "_version":18228, "_select_time":1517968664}, {"StdStg":6899, "StdStl":8, "_update_time":"1517969223", "cambrian_appid":"0", "changefreq":"always", "age":"0", "areaName":"江苏", "businessEntity":"王兵", "cardNum":"55803953-7", "caseCode":"(2017)苏0105执1859号", "courtName":"南京市建邺区人民法院", "disruptTypeName":"有履行能力而拒不履行生效法律文书确定义务", "duty":"江苏梵克雅宝纺织科技发展有限公司于本判决书生效之日起十五日内支付徐建勤2016年9月、10月、11月工资共计11142元。江苏梵克雅宝纺织科技发展有限公司如果未按本判决指定的期间履行给付金钱义务，应当依照《中华人民共和国民事诉讼法》第二百五十三条之规定，加倍支付迟延履行期间的债务利息。本案案件受理费10元，予以免交；公告费300元，由江苏梵克雅宝纺织科技发展有限公司承担。公告费由江苏梵克雅宝纺织科技发展有限公司于本判决书生效之日起十五日内直接支付给徐建勤，以抵冲其预付的公告费用。如不服本判决，可在判决书送达之日起十五日内，向本院递交上诉状及副本一份，上诉于江苏省南京市中级人民法院。", "focusNumber":"0", "gistId":"(2017)苏0105民初512号", "gistUnit":"南京市建邺区人民法院", "iname":"江苏梵克雅宝纺织科技发展有限公司", "partyTypeName":"1", "performance":"全部未履行", "performedPart":"暂无", "publishDate":"2017年09月20日", "publishDateStamp":"1505836800", "regDate":"20170830", "sexy":"", "sitelink":"http:\/\/shixin.court.gov.cn\/", "type":"失信被执行人名单", "unperformPart":"暂无", "lastmod":"2018-02-07T01:33:27", "loc":"http:\/\/shixin.court.gov.cn\/detail?id=701103936", "priority":"1.0", "SiteId":2004188, "_version":18228, "_select_time":1517968664}], "otherinfo":"{}", "resNum":6, "dispNum":6, "listNum":6, "normdisp":1, "term_demand":-1, "url":"http:\/\/shixin.court.gov.cn\/%CA%A7%D0%C5%B1%BB%D6%B4%D0%D0%C8%CB%C3%FB%B5%A5", "TitleSuffix":"baidu", "template_pattern_demand_index":4, "showlamp":"1", "ExtendedLocation":"", "OriginQuery":"失信被执行人名单", "tplt":"trust", "resourceid":"6899", "fetchkey":"失信被执行人名单", "appinfo":""}]});
@@ -229,3 +247,4 @@ for c in c_list:
  "_version":18228,
  "_select_time":1517968664}]}]})
 '''
+

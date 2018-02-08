@@ -5,7 +5,7 @@ import hashlib
 class Item_dump():
 
     def __init__(self, item):
-        self.r = redis.Redis(host='127.0.0.1', port=6379, db=4) # 连接数据库
+        self.r = redis.Redis(host='127.0.0.1', port=6379, db=5) # 连接数据库
         self.item_key = "item_dumpkey"
         self.item = item
 
