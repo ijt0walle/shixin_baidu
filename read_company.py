@@ -1,7 +1,7 @@
 # coding=utf-8
 import datetime
 
-def read_company(csv):
+def read_company1(csv):
     company_list = []
     with open(csv, 'r') as f:
         c_list = f.readlines()
@@ -20,6 +20,16 @@ def read_company(csv):
     return company_list
 
 
+def read_company2(csv):
+    company_list = []
+    with open(csv, 'r') as f:
+        c_list = f.readlines()
+    for c in c_list:
+        company = c.strip()
+        if company:
+            company_list.append(company)
+    return company_list
+
 if __name__ == '__main__':
-    read_company('company/监理类公司.csv')
+    read_company1('company/监理类公司.csv')
 

@@ -56,9 +56,6 @@ import datetime
 <class 'dict'> {'_update_time': '1517968738', 'regDate': '20170116', 'gistId': '（2016）桂1081民初622号', 'publishDateStamp': '1485187200', 'unperformPart': '暂无', 'courtName': '靖西市人民法院', 'priority': '1.0', 'lastmod': '2018-02-06T23:41:12', 'performedPart': '暂无', 'loc': 'http://shixin.court.gov.cn/detail?id=516346803', 'areaName': '广西', 'SiteId': 2004188, 'iname': '广西五鸿建设集团有限公司', 'partyTypeName': '1', 'focusNumber': '0', 'duty': '一、由被告广西五鸿建设集团有限公司给付尚欠原告靖西县天盛建材有限公司混凝土材料款3616778.50元和违约金500000元以及利息70527.2元，共计4187305.7元；二、驳回原告的其他诉讼请求。本案受理费49738元（原告已预交24869元），由原告靖西县天盛建材有限公司负担11311元，由被告广西五鸿建设集团有限公司负担38427元。', 'caseCode': '（2017）桂1081执32号', 'changefreq': 'always', 'cambrian_appid': '0', 'cardNum': '619848910', 'sitelink': 'http://shixin.court.gov.cn/', 'gistUnit': '暂无', '_select_time': 1517968664, 'StdStg': 6899, 'sexy': '暂无', 'age': '0', 'performance': '全部未履行', 'publishDate': '2017年01月24日', '_version': 18228, 'StdStl': 8, 'businessEntity': '蔡立宗', 'disruptTypeName': '其他有履行能力而拒不履行生效法律文书确定义务的', 'type': '失信被执行人名单'}
 '''
 
-# /**/jQuery1102025075011778413225_1517966791832({"status":"0","t":"1517979089000","set_cache_time":"","data":[]});
-# with open('text.csv', 'r') as f:
-#     json_str = f.readlines()[0].strip()
 
 class Handel_json():
 
