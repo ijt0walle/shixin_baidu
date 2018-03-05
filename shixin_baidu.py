@@ -86,8 +86,6 @@ _:1517966791842
 class Sx_baidu_spider():
 
     def __init__(self, path=None, type=None, text_list=None, code=1517966791832):
-
-
         self.client = pymongo.MongoClient(host='127.0.0.1', port=27017)
         self.conn = self.client["qg_ss"]['company']
         self.type = type # 公司类型
@@ -112,7 +110,7 @@ class Sx_baidu_spider():
                     u = Rand_ua()
                     ua = u.rand_chose()
                     headers = {
-                        "User-Agent": "".format(ua),
+                        "User-Agent": ua,
                     }
                     try:
                         ret = requests.get(url, headers=headers, timeout=60)
@@ -140,10 +138,15 @@ class Sx_baidu_spider():
                     item["type"] = self.type
                     nd = int(time.time()) * 1000
                     nd1 = nd + 2500000
-                    #                                                                                                                                                                                                                               jQuery110207908245808463605_1518138375951
+
                     url = "https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?resource_id=6899&query=%E5%A4%B1%E4%BF%A1%E8%A2%AB%E6%89%A7%E8%A1%8C%E4%BA%BA%E5%90%8D%E5%8D%95&cardNum=&iname={}&areaName=&ie=utf-8&oe=utf-8&format=json&t={}&cb=jQuery1102025075011778413225_1517966791832&_={}".format(company, nd1, nd)
+                    u = Rand_ua()
+                    ua = u.rand_chose()
+                    headers = {
+                        "User-Agent": ua,
+                    }
                     try:
-                        ret = requests.get(url, headers=self.headers)
+                        ret = requests.get(url, headers=headers)
                     except Exception as e:
                         with open('log/ss_log.log','a') as f:
                             now = str(datetime.datetime.now())
