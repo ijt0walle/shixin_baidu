@@ -133,6 +133,7 @@ class Sx_baidu_spider():
             for c in self.text_list:
                 company = c.strip()
                 if company:
+                    print(company)
                     item = {}
                     item["company"] = company
                     item["type"] = self.type
@@ -148,6 +149,7 @@ class Sx_baidu_spider():
                     try:
                         ret = requests.get(url, headers=headers)
                     except Exception as e:
+                        print(e)
                         with open('log/ss_log.log','a') as f:
                             now = str(datetime.datetime.now())
                             f.write(now + ',' + str(e) + ',' + company + ',' + '失信信息' + '\n')
